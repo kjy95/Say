@@ -108,45 +108,7 @@ class ViewController: NSViewController {
             }
         }
     }
- /*
-    func dialogOK(question: String, text: String) {
-        let myPopup: NSAlert = NSAlert()
-        myPopup.messageText = question
-        myPopup.informativeText = text
-        myPopup.alertStyle = NSAlertStyle.warning
-        myPopup.addButton(withTitle: "OK")
-        myPopup.runModal()
-    }
-    
-    @IBAction func selectText(_ sender: NSTextField) {
-        if let url = URL(string: sender.stringValue) {
-            // if URL format is right
-            if let data = NSData.init(contentsOf: url) {
-                let dataString = String(data:data as Data, encoding:String.Encoding.utf8)!
-                if let result = findTitle(in: dataString) {
-                    textView.string = result
-                } else {
-                    dialogOK(question:"URL fetching error", text: "URL is not accessible")
-                }
-            } else {
-                dialogOK(question:"URL fetching error", text: "URL is not accessible")            }
-        } else {
-            dialogOK(question:"URL fetching error", text: "URL is not accessible")
-        }
-    }
-    
-    func findTitle(in dataString: String) -> String? {
-        let regex = try! NSRegularExpression(pattern: "<title>\\s*(.*)\\s*</title>", options: NSRegularExpression.Options())
-        let result = regex.matches(in: dataString as String, options: NSRegularExpression.MatchingOptions(), range: NSRange(location: 0, length: dataString.characters.count))
-        if result.count > 0 {
-            let range = result[0].rangeAt(1)
-            let text = (dataString as NSString).substring(with: range)
-            
-            return text
-        } else {
-            return nil
-        }
-    }*/
+ 
     func dialogOK(question: String, text: String) {
         let myPopup: NSAlert = NSAlert()
         myPopup.messageText = question
@@ -161,7 +123,7 @@ class ViewController: NSViewController {
             let instapaper = "https://www.instapaper.com/text?u="
             let onlyText = URL(string:"\(instapaper)\(url)")
             // if URL format is right
-            if let data = NSData.init(contentsOf: onlyText!) {
+            if let data = NSData(contentsOf: onlyText!) {
                 let dataString = String(data:data as Data, encoding:String.Encoding.utf8)!
                 if let result = findMainClass(in: dataString) {
                     //textView.string = dataString//all html
@@ -189,16 +151,19 @@ class ViewController: NSViewController {
         }
     }
     func findMainClass(in dataString: String) -> String? {
-        textView.string = dataString
-        let unlinedString = dataString.replacingOccurrences(of: "\n", with: " ");
-        let regex = try! NSRegularExpression(pattern: "<main.*", options: NSRegularExpression.Options())
-        let result = regex.matches(in: unlinedString as String, options: NSRegularExpression.MatchingOptions(), range: NSRange(location: 0, length: dataString.characters.count))
+        let unlinedString = dataString.replacingOccurrences(of: "\n", with: " ").replacingOccurrences(of: "\r", with: "")
+        
+        let regex = try! NSRegularExpression(pattern: "<main.*</main>", options: NSRegularExpression.Options())
+        let result = regex.matches(in: unlinedString as String, options: NSRegularExpression.MatchingOptions(), range: NSRange(location: 0, length: unlinedString.characters.count))
         
         if result.count > 0 {
             let range = result[0].rangeAt(0)
-            let text = (dataString as NSString).substring(with: range)
-            textView.string = text
-            return text
+            let text = (unlinedString as NSString).substring(with: range)
+            
+            let regexTag = try! NSRegularExpression(pattern: "<[^>]*>", options: NSRegularExpression.Options())
+            var realResult = regexTag.stringByReplacingMatches(in: text, options: NSRegularExpression.MatchingOptions(), range: NSRange(location: 0, length: text.characters.count), withTemplate: "")
+            textView.string = realResult
+            return realResult
         } else {
             return nil
         }
